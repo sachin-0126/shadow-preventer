@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHADOW PREVENTER &mdash; Ghost Access & Credential Threat Defense</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js via CDN + Local Fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    if (typeof Chart === 'undefined') {
+      document.write('<script src="static/vendor/chart.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Core Cybersecurity Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="cyber-grid-overlay"></div>
+  <div id="toast-shelf"></div>
+
+  <!-- =========================================================================
+       MODULE 1: LOGIN PAGE
+       ========================================================================= -->
+  <div id="loginSection" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand-header">
+        <div class="login-brand-icon">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <h1 class="login-title">SHADOW PREVENTER</h1>
+        <p class="login-tagline">Autonomous Ghost Access & Zombie Credential Prevention System</p>
+        <div style="margin-top: 8px;">
+          <span class="demo-chip">CYBERSECURITY HACKATHON PROTOTYPE</span>
+        </div>
+      </div>
+
+      <!-- Role Selector -->
+      <div class="login-role-tabs">
+        <button type="button" class="login-role-tab active" id="tabAdmin" onclick="setLoginRole('admin')">
+          <i class="fas fa-user-shield"></i> SOC Administrator
+        </button>
+        <button type="button" class="login-role-tab" id="tabEmployee" onclick="setLoginRole('employee')">
+          <i class="fas fa-id-badge"></i> Employee Portal
+        </button>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="form-group">
+          <label class="form-label" for="loginUsername">
+            <i class="fas fa-user" style="color: #F43F5E; margin-right: 4px;"></i> Username
+          </label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="e.g. admin or r.menon" required autocomplete="username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="loginPassword">
+            <i class="fas fa-lock" style="color: #F43F5E; margin-right: 4px;"></i> Password
+          </label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Enter security passphrase" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+          <i class="fas fa-right-to-bracket"></i>
+          <span id="loginBtnLabel">Access SOC Command Center</span>
+        </button>
+      </form>
+
+      <!-- Demo Credentials Helper -->
+      <div class="demo-credentials-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; color: #F43F5E; font-family: var(--font-mono);">
+          <span><i class="fas fa-key"></i> DEMO CREDENTIALS</span>
+          <span style="font-size: 10px; color: #94A3B8;">Click to Auto-fill</span>
+        </div>
+
+        <button type="button" class="demo-cred-btn" onclick="fillCredentials('admin', 'Admin@2026', 'admin')">
+          <span><i class="fas fa-shield" style="color: #A6244C; margin-right: 6px;"></i><strong>SOC Admin</strong></span>
+          <span style="font-family: var(--font-mono); color: #94A3B8;">admin / Admin@2026</span>
+        </button>
+
+        <button type="button" class="demo-cred-btn danger-case" onclick="fillCredentials('r.menon', 'Rohan@1234', 'employee')">
+          <span><i class="fas fa-triangle-exclamation" style="color: #EF4444; margin-right: 6px;"></i><strong>Rohan Menon (Incident)</strong></span>
+          <span style="font-family: var(--font-mono); color: #94A3B8;">r.menon / Rohan@1234</span>
+        </button>
+
+        <button type="button" class="demo-cred-btn" onclick="fillCredentials('a.sharma', 'Employee@2026', 'employee')">
+          <span><i class="fas fa-user-check" style="color: #3B82F6; margin-right: 6px;"></i><strong>Ananya Sharma (DevOps)</strong></span>
+          <span style="font-family: var(--font-mono); color: #94A3B8;">a.sharma / Employee@2026</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       APP SHELL: SIDEBAR + MAIN CONTENT
+       ========================================================================= -->
+  <div id="appContainer" class="app-container" style="display: none;">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">
+          <i class="fas fa-shield-cat"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">SHADOW PREVENTER</span>
+          <span class="brand-badge">GHOST ACCESS DEFENSE</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Admin Routes -->
+        <div class="nav-section admin-only-nav">Surveillance</div>
+        <a class="nav-link admin-only-nav active" data-view="dashboardView" onclick="switchView('dashboardView')">
+          <i class="fas fa-chart-line"></i>
+          <span>SOC Dashboard</span>
+        </a>
+        <a class="nav-link admin-only-nav" data-view="credentialMonitoringView" onclick="switchView('credentialMonitoringView')">
+          <i class="fas fa-user-shield"></i>
+          <span>Credential Monitor</span>
+        </a>
+        <a class="nav-link admin-only-nav" data-view="alertsView" onclick="switchView('alertsView')">
+          <i class="fas fa-bell"></i>
+          <span>Security Alerts</span>
+          <span class="nav-pill pill-red" id="sidebarCriticalPill">4</span>
+        </a>
+        <a class="nav-link admin-only-nav" data-view="approvalsView" onclick="switchView('approvalsView')">
+          <i class="fas fa-tasks"></i>
+          <span>Approval System</span>
+          <span class="nav-pill pill-amber" id="sidebarApprovalsPill">6</span>
+        </a>
+
+        <div class="nav-section admin-only-nav">Administration</div>
+        <a class="nav-link admin-only-nav" data-view="employeesView" onclick="switchView('employeesView')">
+          <i class="fas fa-users-gear"></i>
+          <span>Employee Directory</span>
+        </a>
+        <a class="nav-link admin-only-nav" data-view="auditLogsView" onclick="switchView('auditLogsView')">
+          <i class="fas fa-file-shield"></i>
+          <span>Audit Logs</span>
+        </a>
+
+        <!-- Employee Portal Route -->
+        <div class="nav-section">User View</div>
+        <a class="nav-link" data-view="employeeDashboardView" onclick="switchView('employeeDashboardView')">
+          <i class="fas fa-id-card"></i>
+          <span>Employee Dashboard</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-mini-card">
+          <div class="user-avatar" id="sidebarUserAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="sidebarUserName">Administrator</div>
+            <div class="user-role" id="sidebarUserRole">SOC ADMIN</div>
+          </div>
+          <button type="button" class="btn-signout" onclick="handleLogout()" title="Sign Out">
+            <i class="fas fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <div class="main-wrapper">
+      <!-- Top Navigation Header -->
+      <header class="top-navbar">
+        <div class="top-nav-left">
+          <button type="button" class="btn btn-outline btn-sm" id="btnToggleSidebar" onclick="toggleSidebarMenu()" style="display: none;">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-heading">
+            <span id="currentViewTitle">SOC Command Center</span>
+          </div>
+          <div class="defense-badge">
+            <span class="defense-pulse"></span>
+            <span>SHADOW DEFENSE ACTIVE</span>
+          </div>
+        </div>
+
+        <div class="top-nav-right">
+          <div class="digital-clock" id="digitalClockDisplay">
+            <i class="fas fa-clock"></i> <span>--:--:--</span>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetDemoData()">
+            <i class="fas fa-rotate"></i> Reset Demo
+          </button>
+        </div>
+      </header>
+
+      <!-- View Sections Body -->
+      <main class="page-body">
+
+        <!-- ===================================================================
+             MODULE 2: ADMIN DASHBOARD
+             =================================================================== -->
+        <section id="dashboardView" class="app-view active-view">
+          <!-- Top KPI Metrics Cards (Total: 120, Active: 95, Inactive: 15, Suspicious: 10, Critical: 4, Approvals: 6) -->
+          <div class="kpi-row">
+            <!-- 1. Total Employees: 120 -->
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Total Employees</span>
+                <div class="kpi-icon"><i class="fas fa-users"></i></div>
+              </div>
+              <div class="kpi-number" id="kpiTotalEmployees">120</div>
+              <div class="kpi-subtext">Registered across enterprise</div>
+            </div>
+
+            <!-- 2. Active Accounts: 95 -->
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Active Accounts</span>
+                <div class="kpi-icon" style="color: #10B981;"><i class="fas fa-user-check"></i></div>
+              </div>
+              <div class="kpi-number" style="color: #34D399;" id="kpiActiveAccounts">95</div>
+              <div class="kpi-subtext">Compliant credentials</div>
+            </div>
+
+            <!-- 3. Inactive Accounts: 15 -->
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Inactive Accounts</span>
+                <div class="kpi-icon" style="color: #F59E0B;"><i class="fas fa-clock-rotate-left"></i></div>
+              </div>
+              <div class="kpi-number" style="color: #FBBF24;" id="kpiInactiveAccounts">15</div>
+              <div class="kpi-subtext">Dormant &bull; 3–5 day sentinel</div>
+            </div>
+
+            <!-- 4. Suspicious Accounts: 10 -->
+            <div class="kpi-tile kpi-critical">
+              <div class="kpi-top">
+                <span class="kpi-label">Suspicious Accounts</span>
+                <div class="kpi-icon"><i class="fas fa-user-ninja"></i></div>
+              </div>
+              <div class="kpi-number" style="color: #F87171;" id="kpiSuspiciousAccounts">10</div>
+              <div class="kpi-subtext">Ghost access & anomaly flags</div>
+            </div>
+
+            <!-- 5. Critical Alerts: 4 -->
+            <div class="kpi-tile kpi-critical">
+              <div class="kpi-top">
+                <span class="kpi-label">Critical Alerts</span>
+                <div class="kpi-icon"><i class="fas fa-triangle-exclamation"></i></div>
+              </div>
+              <div class="kpi-number" style="color: #EF4444;" id="kpiCriticalAlerts">4</div>
+              <div class="kpi-subtext">Requires immediate isolation</div>
+            </div>
+
+            <!-- 6. Pending Approvals: 6 -->
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Pending Approvals</span>
+                <div class="kpi-icon" style="color: #3B82F6;"><i class="fas fa-clipboard-check"></i></div>
+              </div>
+              <div class="kpi-number" id="kpiPendingApprovals">6</div>
+              <div class="kpi-subtext">Access & unfreeze requests</div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               CRITICAL DEMO CASE: ROHAN MENON HERO BANNER & INVESTIGATION
+               ================================================================= -->
+          <div class="demo-case-banner">
+            <div class="demo-banner-top">
+              <div class="demo-badge-row">
+                <span class="demo-chip-danger"><i class="fas fa-skull-crossbones"></i> CRITICAL SECURITY ALERT</span>
+                <span class="demo-chip-simulated"><i class="fas fa-flask"></i> SIMULATED INCIDENT CASE STUDY</span>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: #FCA5A5;">
+                <i class="fas fa-clock"></i> 13 August 2026 &bull; 23:14 IST
+              </span>
+            </div>
+
+            <div class="demo-banner-title">
+              <i class="fas fa-triangle-exclamation" style="color: #EF4444;"></i>
+              <span>Former employee account successfully authenticated after departure.</span>
+            </div>
+
+            <p class="demo-banner-desc">
+              <strong>Ghost Access Telemetry:</strong> Account <code>r.menon</code> belonging to former employee 
+              <strong>Rohan Menon</strong> (Accounts Payable Clerk) logged into internal financial systems 
+              <strong>44 days</strong> after the official last working day (<strong>30 June 2026</strong>). 
+              The account was never de-provisioned and had no MFA protection enrolled.
+            </p>
+
+            <!-- Forensic Data Matrix -->
+            <div class="telemetry-bar">
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Employee</span>
+                <span class="telemetry-data">Rohan Menon</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Position</span>
+                <span class="telemetry-data">Accounts Payable Clerk</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Last Working Day</span>
+                <span class="telemetry-data highlight-amber">30 June 2026</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Username</span>
+                <span class="telemetry-data">r.menon</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Incident Date</span>
+                <span class="telemetry-data highlight-red">13 August 2026</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Origin IP</span>
+                <span class="telemetry-data highlight-red">172.16.8.44</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Location</span>
+                <span class="telemetry-data">Chennai</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Authentication</span>
+                <span class="telemetry-data">Password only</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">MFA Enrolled</span>
+                <span class="telemetry-data highlight-red">Not enrolled</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">Result</span>
+                <span class="telemetry-data highlight-red">Successful login</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div style="font-size: 11.5px; color: #94A3B8; font-style: italic;">
+                Note: Telemetry demonstrates credential usage. Evidence does not identify the individual behind the session. Marked as simulated.
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="toggleInvestigationPanel()">
+                  <i class="fas fa-magnifying-glass-chart"></i> View Investigation Panel
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnQuarantineRohan" onclick="quarantineRohanAccount()">
+                  <i class="fas fa-ban"></i> Suspend & Quarantine Account
+                </button>
+              </div>
+            </div>
+
+            <!-- Expandable Investigation Panel -->
+            <div id="rohanInvestigationPanel" class="investigation-panel" style="display: none;">
+              <h4 style="font-size: 13px; font-weight: 700; color: #FFF; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-microscope" style="color: #EF4444;"></i> Forensic Incident Investigation & Risk Assessment
+              </h4>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <!-- Timeline -->
+                <div>
+                  <div style="font-size: 11.5px; font-weight: 700; color: #CBD5E1; margin-bottom: 10px; font-family: var(--font-mono);">
+                    INCIDENT TIMELINE
+                  </div>
+                  <div class="timeline-step">
+                    <div class="timeline-dot"><i class="fas fa-check"></i></div>
+                    <div style="font-size: 12px; color: #CBD5E1;">
+                      <strong style="color: #FFF;">30 June 2026</strong> &bull; Official last working day for Rohan Menon. Human Resources offboarding record marked resigned.
+                    </div>
+                  </div>
+                  <div class="timeline-step">
+                    <div class="timeline-dot"><i class="fas fa-clock"></i></div>
+                    <div style="font-size: 12px; color: #CBD5E1;">
+                      <strong style="color: #FFF;">01 July – 12 August 2026</strong> &bull; Active Directory de-provisioning ticket omitted. Account remained enabled in finance database.
+                    </div>
+                  </div>
+                  <div class="timeline-step">
+                    <div class="timeline-dot danger"><i class="fas fa-skull"></i></div>
+                    <div style="font-size: 12px; color: #FCA5A5;">
+                      <strong style="color: #FFF;">13 August 2026 (23:14)</strong> &bull; Successful authentication recorded from external IP <code>172.16.8.44</code> (Chennai). Password only. No MFA token prompted.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Security Risks & Recommendations -->
+                <div>
+                  <div style="font-size: 11.5px; font-weight: 700; color: #CBD5E1; margin-bottom: 10px; font-family: var(--font-mono);">
+                    SECURITY RISKS & MITIGATION
+                  </div>
+                  <ul style="font-size: 12px; color: #CBD5E1; padding-left: 18px; line-height: 1.6;">
+                    <li><strong>Financial System Exposure:</strong> Accounts Payable permissions allow generating or altering payment orders.</li>
+                    <li><strong>Zombie Credential Risk:</strong> Stale passwords vulnerable to credential stuffing, malware exfiltration, or rogue insider access.</li>
+                    <li><strong>Lack of MFA:</strong> Single-factor password verification failed to halt remote login attempt.</li>
+                  </ul>
+
+                  <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="approveIncidentAction('Rohan Menon', 'Enforce Session Revocation & Password Reset')">
+                      <i class="fas fa-shield"></i> Administrator Review Action
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Grid: Account Status Breakdown + Login Activity -->
+          <div class="charts-grid">
+            <!-- Chart 1: Login Activity & Threat Telemetry -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fas fa-chart-area"></i> Authentication Telemetry & Anomalies
+                </div>
+                <span class="badge badge-active">Live Stream</span>
+              </div>
+              <div class="card-panel-body">
+                <div class="chart-wrapper">
+                  <canvas id="loginActivityChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart 2: Account Status Distribution (95, 15, 10) -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fas fa-chart-pie"></i> Account Posture Matrix
+                </div>
+                <span class="badge badge-flagged" id="badgeTotalAccounts">120 Accounts</span>
+              </div>
+              <div class="card-panel-body">
+                <div class="chart-wrapper">
+                  <canvas id="accountStatusChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 3: EMPLOYEE MANAGEMENT
+             =================================================================== -->
+        <section id="employeesView" class="app-view">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fas fa-users-gear"></i> Employee Identity Directory
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openAddEmployeeModal()">
+                  <i class="fas fa-plus"></i> Add Employee
+                </button>
+              </div>
+            </div>
+
+            <div class="card-panel-body" style="padding-bottom: 12px;">
+              <!-- Search & Filters -->
+              <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                <input type="text" id="employeeSearchInput" class="form-input" placeholder="Search by name, ID, designation, department..." style="max-width: 320px;" oninput="filterEmployeeTable()">
+                <select id="employeeDeptFilter" class="form-select" style="max-width: 180px;" onchange="filterEmployeeTable()">
+                  <option value="">All Departments</option>
+                  <option value="Finance">Finance</option>
+                  <option value="IT Security">IT Security</option>
+                  <option value="IT Infrastructure">IT Infrastructure</option>
+                  <option value="Human Resources">Human Resources</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Business Dev">Business Development</option>
+                </select>
+                <select id="employeeStatusFilter" class="form-select" style="max-width: 170px;" onchange="filterEmployeeTable()">
+                  <option value="">All Statuses</option>
+                  <option value="Active">Active</option>
+                  <option value="Resigned">Resigned</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Terminated">Terminated</option>
+                </select>
+              </div>
+
+              <!-- Employees Table -->
+              <div class="table-container">
+                <table class="data-table" id="employeeTable">
+                  <thead>
+                    <tr>
+                      <th>Employee Name</th>
+                      <th>Employee ID</th>
+                      <th>Department</th>
+                      <th>Designation</th>
+                      <th>Joining Date</th>
+                      <th>Last Working Date</th>
+                      <th>Employment Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="employeeTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 4: CREDENTIAL MONITORING
+             =================================================================== -->
+        <section id="credentialMonitoringView" class="app-view">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fas fa-user-shield"></i> Credential & Ghost Access Surveillance
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <span class="badge badge-flagged"><i class="fas fa-triangle-exclamation"></i> Ghost Access Flags</span>
+                <span class="badge badge-dormant"><i class="fas fa-clock"></i> 3–5d Inactivity</span>
+              </div>
+            </div>
+
+            <div class="card-panel-body" style="padding-bottom: 12px;">
+              <div class="table-container">
+                <table class="data-table" id="credentialTable">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Employee ID</th>
+                      <th>Account Type</th>
+                      <th>Last Login</th>
+                      <th>MFA Status</th>
+                      <th>Inactivity Duration</th>
+                      <th>Account Status</th>
+                      <th style="text-align: right;">Administrative Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="credentialTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 5: SECURITY ALERTS
+             =================================================================== -->
+        <section id="alertsView" class="app-view">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fas fa-bell"></i> Autonomous Threat Alerts & Incident Queue
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary btn-sm alert-filter-btn active" onclick="filterAlerts('All')">All</button>
+                <button type="button" class="btn btn-outline-danger btn-sm alert-filter-btn" onclick="filterAlerts('Critical')">Critical</button>
+                <button type="button" class="btn btn-outline btn-sm alert-filter-btn" onclick="filterAlerts('High')">High</button>
+                <button type="button" class="btn btn-outline btn-sm alert-filter-btn" onclick="filterAlerts('Medium')">Medium</button>
+                <button type="button" class="btn btn-outline btn-sm alert-filter-btn" onclick="filterAlerts('Low')">Low</button>
+              </div>
+            </div>
+
+            <div class="card-panel-body">
+              <div id="alertsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 6: APPROVAL SYSTEM
+             =================================================================== -->
+        <section id="approvalsView" class="app-view">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fas fa-tasks"></i> Dual-Control Security Approvals & Decision Queue
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-primary btn-sm approval-filter-btn active" onclick="filterApprovals('All')">All</button>
+                <button type="button" class="btn btn-outline btn-sm approval-filter-btn" onclick="filterApprovals('Pending')">Pending</button>
+                <button type="button" class="btn btn-outline btn-sm approval-filter-btn" onclick="filterApprovals('Approved')">Approved</button>
+                <button type="button" class="btn btn-outline btn-sm approval-filter-btn" onclick="filterApprovals('Rejected')">Rejected</button>
+              </div>
+            </div>
+
+            <div class="card-panel-body" style="padding-bottom: 12px;">
+              <div class="table-container">
+                <table class="data-table" id="approvalsTable">
+                  <thead>
+                    <tr>
+                      <th>Request ID</th>
+                      <th>Target Username</th>
+                      <th>Request Type</th>
+                      <th>Urgency</th>
+                      <th>Reason / Justification</th>
+                      <th>Decision Status</th>
+                      <th>Administrator Notes</th>
+                      <th style="text-align: right;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="approvalsTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 7: AUDIT LOGS
+             =================================================================== -->
+        <section id="auditLogsView" class="app-view">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title">
+                <i class="fas fa-file-shield"></i> Cryptographic Forensic Audit Trail
+              </div>
+              <button type="button" class="btn btn-outline-maroon btn-sm" onclick="exportAuditLogsCSV()">
+                <i class="fas fa-file-csv"></i> Export CSV
+              </button>
+            </div>
+
+            <div class="card-panel-body" style="padding-bottom: 12px;">
+              <div style="display: flex; gap: 12px; margin-bottom: 14px;">
+                <input type="text" id="auditSearchInput" class="form-input" placeholder="Search actions, target username, administrator..." style="max-width: 340px;" oninput="filterAuditTable()">
+              </div>
+
+              <div class="table-container">
+                <table class="data-table" id="auditTable">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Admin Actor</th>
+                      <th>Action Performed</th>
+                      <th>Target Account</th>
+                      <th>Details & Reason</th>
+                      <th>Origin IP</th>
+                    </tr>
+                  </thead>
+                  <tbody id="auditTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             MODULE 8: EMPLOYEE DASHBOARD
+             =================================================================== -->
+        <section id="employeeDashboardView" class="app-view">
+          <!-- Employee Profile & Posture Cards -->
+          <div class="kpi-row" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Account Status</span>
+                <div class="kpi-icon"><i class="fas fa-id-card"></i></div>
+              </div>
+              <div class="kpi-number" id="empViewAccountStatus">Active</div>
+              <div class="kpi-subtext" id="empViewPosition">DevOps Engineer</div>
+            </div>
+
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">MFA Security Posture</span>
+                <div class="kpi-icon" style="color: #10B981;"><i class="fas fa-shield"></i></div>
+              </div>
+              <div class="kpi-number" style="font-size: 20px; color: #34D399;" id="empViewMfaStatus">Enrolled (TOTP)</div>
+              <div class="kpi-subtext">Hardware / App Token</div>
+            </div>
+
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Security Health</span>
+                <div class="kpi-icon" style="color: #34D399;"><i class="fas fa-heart-pulse"></i></div>
+              </div>
+              <div class="kpi-number" style="color: #34D399;" id="empViewHealthScore">95%</div>
+              <div class="kpi-subtext">Compliance policy compliant</div>
+            </div>
+
+            <div class="kpi-tile">
+              <div class="kpi-top">
+                <span class="kpi-label">Inactivity Counter</span>
+                <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+              </div>
+              <div class="kpi-number" style="font-size: 22px;" id="empViewInactivity">0 Days</div>
+              <div class="kpi-subtext">Active session verified</div>
+            </div>
+          </div>
+
+          <!-- Employee Action Grid -->
+          <div class="charts-grid">
+            <!-- Personal Login History -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fas fa-clock-rotate-left"></i> My Recent Login Sessions
+                </div>
+                <span class="badge badge-active">Audited</span>
+              </div>
+              <div class="card-panel-body" style="padding: 0;">
+                <div class="table-container">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>IP Address</th>
+                        <th>Location</th>
+                        <th>Auth Method</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="empLoginHistoryBody">
+                      <!-- Populated dynamically via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Access Request Form -->
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title">
+                  <i class="fas fa-file-signature"></i> Security Clearance Request
+                </div>
+              </div>
+              <div class="card-panel-body">
+                <form id="empRequestForm" onsubmit="handleEmpRequestSubmit(event)">
+                  <div class="form-group">
+                    <label class="form-label" for="empReqType">Request Type</label>
+                    <select id="empReqType" class="form-select" required>
+                      <option value="MFA Reset & Token Re-enrollment">MFA Reset & Token Re-enrollment</option>
+                      <option value="Account Reactivation">Account Reactivation / Dormancy Clearance</option>
+                      <option value="Planned Leave Exemption">Planned Leave (Dormancy Exemption)</option>
+                      <option value="Temporary Financial Portal Access">Temporary Financial Portal Access</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="empReqUrgency">Urgency</label>
+                    <select id="empReqUrgency" class="form-select">
+                      <option value="Low">Low &bull; Routine administrative</option>
+                      <option value="Medium" selected>Medium &bull; Standard operation</option>
+                      <option value="High">High &bull; Urgent blockage</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="empReqReason">Business Justification</label>
+                    <textarea id="empReqReason" class="form-textarea" rows="3" placeholder="Explain the business reason for this request..." required></textarea>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-paper-plane"></i> Submit Request to SOC
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODALS
+       ========================================================================= -->
+
+  <!-- Modal: Add Employee -->
+  <div class="modal-backdrop" id="addEmployeeModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-user-plus" style="color: #F43F5E;"></i> Add Employee Identity
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+      </div>
+      <form id="addEmployeeForm" onsubmit="handleAddEmployee(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="addEmpName">Employee Name *</label>
+            <input type="text" id="addEmpName" class="form-input" placeholder="e.g. Rahul Sharma" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addEmpId">Employee ID *</label>
+            <input type="text" id="addEmpId" class="form-input" placeholder="e.g. SEC-1042" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addEmpDept">Department *</label>
+            <select id="addEmpDept" class="form-select" required>
+              <option value="Finance">Finance</option>
+              <option value="IT Security">IT Security</option>
+              <option value="IT Infrastructure">IT Infrastructure</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Operations">Operations</option>
+              <option value="Business Dev">Business Development</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addEmpDesignation">Designation *</label>
+            <input type="text" id="addEmpDesignation" class="form-input" placeholder="e.g. Security Analyst" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addEmpJoining">Joining Date *</label>
+            <input type="date" id="addEmpJoining" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="addEmpStatus">Employment Status *</label>
+            <select id="addEmpStatus" class="form-select" onchange="toggleLwdField(this.value, 'addEmpLwdGroup')">
+              <option value="Active">Active</option>
+              <option value="Resigned">Resigned</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Terminated">Terminated</option>
+            </select>
+          </div>
+          <div class="form-group" id="addEmpLwdGroup" style="display: none;">
+            <label class="form-label" for="addEmpLwd">Last Working Date</label>
+            <input type="date" id="addEmpLwd" class="form-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('addEmployeeModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Save Identity</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Employee -->
+  <div class="modal-backdrop" id="editEmployeeModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-user-pen" style="color: #F43F5E;"></i> Edit Employee Identity
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('editEmployeeModal')">&times;</button>
+      </div>
+      <form id="editEmployeeForm" onsubmit="handleEditEmployee(event)">
+        <input type="hidden" id="editEmpIndex">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="editEmpName">Employee Name</label>
+            <input type="text" id="editEmpName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editEmpId">Employee ID (Fixed)</label>
+            <input type="text" id="editEmpId" class="form-input" disabled>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editEmpDept">Department</label>
+            <select id="editEmpDept" class="form-select" required>
+              <option value="Finance">Finance</option>
+              <option value="IT Security">IT Security</option>
+              <option value="IT Infrastructure">IT Infrastructure</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Operations">Operations</option>
+              <option value="Business Dev">Business Development</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editEmpDesignation">Designation</label>
+            <input type="text" id="editEmpDesignation" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editEmpStatus">Employment Status</label>
+            <select id="editEmpStatus" class="form-select" onchange="toggleLwdField(this.value, 'editEmpLwdGroup')">
+              <option value="Active">Active</option>
+              <option value="Resigned">Resigned</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Terminated">Terminated</option>
+            </select>
+          </div>
+          <div class="form-group" id="editEmpLwdGroup">
+            <label class="form-label" for="editEmpLwd">Last Working Date</label>
+            <input type="date" id="editEmpLwd" class="form-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('editEmployeeModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Reason Entry for Suspension / Rejection -->
+  <div class="modal-backdrop" id="decisionReasonModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title" id="decisionModalTitle">
+          <i class="fas fa-comment-dots" style="color: #F43F5E;"></i> Record Administrative Reason
+        </div>
+        <button type="button" class="modal-close" onclick="closeModal('decisionReasonModal')">&times;</button>
+      </div>
+      <form id="decisionReasonForm" onsubmit="handleDecisionSubmit(event)">
+        <input type="hidden" id="decisionTargetType">
+        <input type="hidden" id="decisionTargetId">
+        <input type="hidden" id="decisionAction">
+        <div class="modal-body">
+          <p id="decisionModalPrompt" style="font-size: 13px; color: #CBD5E1; margin-bottom: 12px;"></p>
+          <div class="form-group">
+            <label class="form-label" for="decisionReasonText">Reason / Directive *</label>
+            <textarea id="decisionReasonText" class="form-textarea" rows="3" placeholder="Provide justification for security audit trail..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('decisionReasonModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="decisionSubmitBtn">Confirm Decision</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Immutable Audit Trail | SHADOW PREVENTER{% endblock %}
+{% block page_title %}
+  <i class="fas fa-file-shield" style="color: #f43f5e;"></i>
+  <span>Immutable Security Audit Logs</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero-bar">
+  <div class="hero-title-group">
+    <h1>Cryptographic Administrative Audit Trail</h1>
+    <p>Forensic accountability log capturing every administrative decision, quarantine, and policy trigger.</p>
+  </div>
+  <div class="hero-actions">
+    <a href="{{ url_for('export_audit_logs') }}" class="btn-cyber btn-outline-maroon">
+      <i class="fas fa-file-csv"></i>
+      <span>Export Audit Log (CSV)</span>
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="cyber-card" style="margin-bottom: 24px;">
+  <div class="card-body-cyber" style="padding: 16px 20px;">
+    <form method="GET" action="{{ url_for('admin_audit_logs') }}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 220px;">
+        <input type="text" name="action" class="form-input-cyber" placeholder="Filter by action (e.g. SUSPEND, REACTIVATE, SCAN, ADD)..." value="{{ action_filter }}">
+      </div>
+      <div style="width: 170px;">
+        <select name="severity" class="form-select-cyber" onchange="this.form.submit()">
+          <option value="">All Log Severities</option>
+          <option value="Info" {% if severity_filter == 'Info' %}selected{% endif %}>Info</option>
+          <option value="Warning" {% if severity_filter == 'Warning' %}selected{% endif %}>Warning</option>
+          <option value="Critical" {% if severity_filter == 'Critical' %}selected{% endif %}>Critical</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-cyber btn-maroon">
+        <i class="fas fa-filter"></i> Apply Filter
+      </button>
+      {% if action_filter or severity_filter %}
+      <a href="{{ url_for('admin_audit_logs') }}" class="btn-cyber btn-outline">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="cyber-card">
+  <div class="card-header-cyber">
+    <div class="card-title-cyber">
+      <i class="fas fa-list"></i>
+      <span>Audit Event Stream ({{ logs|length }} Entries)</span>
+    </div>
+    <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;">
+      TAMPER-EVIDENT RECORDING ACTIVE
+    </div>
+  </div>
+  <div class="card-body-cyber" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Timestamp (UTC)</th>
+            <th>Administrator / Actor</th>
+            <th>Action Code</th>
+            <th>Target Entity</th>
+            <th>Forensic Details</th>
+            <th>Origin IP</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr class="{% if log.severity == 'Critical' %}row-flagged{% elif log.severity == 'Warning' %}row-dormant{% endif %}">
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 11.5px; color: #cbd5e1;">
+                {{ log.timestamp }}
+              </span>
+            </td>
+            <td>
+              <div style="font-family: var(--font-mono); font-weight: 700; color: #fff;">
+                <i class="fas fa-user-shield" style="font-size: 11px; color: #f43f5e; margin-right: 4px;"></i>
+                {{ log.admin_username }}
+              </div>
+            </td>
+            <td>
+              <span class="status-pill status-active" style="background: rgba(139,30,63,0.3); color: #fecdd3; border-color: var(--border-maroon);">
+                {{ log.action_type }}
+              </span>
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: #e2e8f0; font-weight: 600;">
+                {{ log.target_entity }}
+              </span>
+            </td>
+            <td style="max-width: 420px;">
+              <div style="font-size: 12.5px; color: #cbd5e1; line-height: 1.4;">
+                {{ log.details }}
+              </div>
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94a3b8;">
+                {{ log.ip_address }}
+              </span>
+            </td>
+            <td>
+              <span class="badge-severity {% if log.severity == 'Critical' %}sev-critical{% elif log.severity == 'Warning' %}sev-medium{% else %}sev-low{% endif %}">
+                {{ log.severity }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 30px; color: #94a3b8;">
+              No audit records match the applied criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

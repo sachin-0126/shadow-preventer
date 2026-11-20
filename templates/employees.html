@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Directory & Access Management | SHADOW PREVENTER{% endblock %}
+{% block page_title %}
+  <i class="fas fa-users-gear" style="color: #f43f5e;"></i>
+  <span>Employee Directory & Access Management</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero-bar">
+  <div class="hero-title-group">
+    <h1>Identity Lifecycle & Credential Directory</h1>
+    <p>Manage personnel accounts, offboarding status, and credential provisioning.</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="btn-cyber btn-maroon" onclick="openModal('addEmployeeModal')">
+      <i class="fas fa-user-plus"></i>
+      <span>Provision New Employee</span>
+    </button>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="cyber-card" style="margin-bottom: 24px;">
+  <div class="card-body-cyber" style="padding: 16px 20px;">
+    <form method="GET" action="{{ url_for('admin_employees') }}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+      <div style="flex: 1; min-width: 220px;">
+        <input type="text" name="search" class="form-input-cyber" placeholder="Search by name, username, email, position..." value="{{ search }}">
+      </div>
+      <div style="width: 180px;">
+        <select name="dept" class="form-select-cyber" onchange="this.form.submit()">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+          <option value="{{ dept }}" {% if dept_filter == dept %}selected{% endif %}>{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="width: 170px;">
+        <select name="status" class="form-select-cyber" onchange="this.form.submit()">
+          <option value="">All Account Statuses</option>
+          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Flagged" {% if status_filter == 'Flagged' %}selected{% endif %}>Flagged (Shadow Risk)</option>
+          <option value="Suspended" {% if status_filter == 'Suspended' %}selected{% endif %}>Suspended</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-cyber btn-outline-maroon">
+        <i class="fas fa-filter"></i> Apply
+      </button>
+      {% if search or dept_filter or status_filter %}
+      <a href="{{ url_for('admin_employees') }}" class="btn-cyber btn-outline">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Employee Table Card -->
+<div class="cyber-card">
+  <div class="card-header-cyber">
+    <div class="card-title-cyber">
+      <i class="fas fa-id-badge"></i>
+      <span>Enterprise Personnel ({{ employees|length }} Records)</span>
+    </div>
+    <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;">
+      ROLE-BASED ACCESS CONTROL MATRIX
+    </div>
+  </div>
+  <div class="card-body-cyber" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>User / Identity</th>
+            <th>Department & Position</th>
+            <th>Role</th>
+            <th>Employment Status</th>
+            <th>Account Status</th>
+            <th>MFA Posture</th>
+            <th>Inactivity</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr class="{% if emp.account_status == 'Flagged' %}row-flagged{% elif emp.inactivity_days >= 3 and emp.account_status != 'Suspended' %}row-dormant{% endif %}">
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="avatar-badge" style="{% if emp.username == 'r.menon' %}background: #dc2626; border-color: #ef4444;{% endif %}">
+                  {{ emp.username[:1]|upper }}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: #fff;">
+                    {{ emp.full_name }}
+                    {% if emp.username == 'r.menon' %}
+                    <span style="font-size: 10px; background: #ef4444; color: #fff; padding: 1px 6px; border-radius: 3px; font-family: var(--font-mono); margin-left: 5px;">DEMO CASE</span>
+                    {% endif %}
+                  </div>
+                  <div style="font-size: 11.5px; color: #94a3b8; font-family: var(--font-mono);">
+                    {{ emp.username }} &bull; {{ emp.email }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: #e2e8f0;">{{ emp.position }}</div>
+              <div style="font-size: 11.5px; color: #94a3b8;">{{ emp.department }}</div>
+            </td>
+            <td>
+              <span class="status-pill {% if emp.role == 'admin' %}status-active{% else %}status-dormant{% endif %}">
+                {{ emp.role|upper }}
+              </span>
+            </td>
+            <td>
+              {% if emp.employment_status == 'Resigned' %}
+              <span class="status-pill status-suspended" style="border-color: #ef4444;">
+                <i class="fas fa-user-xmark"></i> Resigned
+              </span>
+              <div style="font-size: 10.5px; color: #f87171; font-family: var(--font-mono); margin-top: 2px;">
+                LWD: {{ emp.resignation_date or 'N/A' }}
+              </div>
+              {% else %}
+              <span class="status-pill status-active">
+                <i class="fas fa-check"></i> Active
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if emp.account_status == 'Active' %}
+              <span class="status-pill status-active"><i class="fas fa-circle-check"></i> Active</span>
+              {% elif emp.account_status == 'Suspended' %}
+              <span class="status-pill status-suspended"><i class="fas fa-ban"></i> Suspended</span>
+              {% elif emp.account_status == 'Flagged' %}
+              <span class="status-pill status-flagged"><i class="fas fa-skull"></i> Flagged Shadow</span>
+              {% else %}
+              <span class="status-pill status-dormant">{{ emp.account_status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if emp.mfa_enabled %}
+              <span class="status-pill status-mfa-on"><i class="fas fa-shield"></i> Enrolled</span>
+              {% else %}
+              <span class="status-pill status-mfa-off"><i class="fas fa-xmark"></i> Unenrolled</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 12px; {% if emp.inactivity_days >= 3 and emp.account_status != 'Suspended' %}color: #fbbf24; font-weight: 700;{% else %}color: #94a3b8;{% endif %}">
+                {{ emp.inactivity_days }} days
+                {% if 3 <= emp.inactivity_days <= 5 and emp.account_status != 'Suspended' %}
+                <span style="display: block; font-size: 9.5px; color: #f59e0b;">(3–5d Threshold)</span>
+                {% elif emp.inactivity_days > 5 and emp.account_status != 'Suspended' %}
+                <span style="display: block; font-size: 9.5px; color: #ef4444;">(&gt;5d Dormant)</span>
+                {% endif %}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                <button type="button" class="btn-cyber btn-outline btn-sm" onclick='openEditModal({{ emp|tojson }})' title="Edit Employee">
+                  <i class="fas fa-pen-to-square"></i>
+                </button>
+
+                {% if emp.account_status != 'Suspended' and emp.username != 'admin' %}
+                <form action="{{ url_for('suspend_account', user_id=emp.id) }}" method="POST" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <input type="hidden" name="reason" value="Suspended via employee management console.">
+                  <button type="submit" class="btn-cyber btn-outline-danger btn-sm" title="Suspend Account" onclick="return confirm('Suspend account for {{ emp.username }}?')">
+                    <i class="fas fa-ban"></i>
+                  </button>
+                </form>
+                {% elif emp.account_status == 'Suspended' %}
+                <form action="{{ url_for('reactivate_account', user_id=emp.id) }}" method="POST" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <input type="hidden" name="reason" value="Reactivated via employee management console.">
+                  <button type="submit" class="btn-cyber btn-outline-maroon btn-sm" title="Reactivate Account" onclick="return confirm('Reactivate account for {{ emp.username }}?')">
+                    <i class="fas fa-rotate-left"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+                {% if emp.username != 'admin' %}
+                <form action="{{ url_for('delete_employee', user_id=emp.id) }}" method="POST" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit" class="btn-cyber btn-outline btn-sm" style="color: #ef4444;" title="Delete Record" onclick="return confirm('Permanently delete {{ emp.username }} from system?')">
+                    <i class="fas fa-trash-can"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 30px; color: #94a3b8;">
+              No employee accounts match the query criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: ADD EMPLOYEE
+     ========================================================================== -->
+<div class="modal-overlay" id="addEmployeeModal">
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-user-plus" style="color: #f43f5e;"></i>
+        <span>Provision New Employee Identity</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('addEmployeeModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form action="{{ url_for('add_employee') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_username">Username *</label>
+            <input type="text" id="add_username" name="username" class="form-input-cyber" placeholder="e.g. j.doe" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_full_name">Full Name *</label>
+            <input type="text" id="add_full_name" name="full_name" class="form-input-cyber" placeholder="e.g. John Doe" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_email">Enterprise Email *</label>
+            <input type="email" id="add_email" name="email" class="form-input-cyber" placeholder="e.g. j.doe@saveetha.sec" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_position">Position / Job Title *</label>
+            <input type="text" id="add_position" name="position" class="form-input-cyber" placeholder="e.g. Security Analyst" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_department">Department *</label>
+            <select id="add_department" name="department" class="form-select-cyber" required>
+              <option value="Finance">Finance</option>
+              <option value="IT Security">IT Security</option>
+              <option value="IT Infrastructure">IT Infrastructure</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Operations">Operations</option>
+              <option value="Business Dev">Business Development</option>
+            </select>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_role">Access Role *</label>
+            <select id="add_role" name="role" class="form-select-cyber" required>
+              <option value="employee">Employee (Standard Access)</option>
+              <option value="admin">SOC Admin (Elevated Privileges)</option>
+            </select>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_employment_status">Employment Status</label>
+            <select id="add_employment_status" name="employment_status" class="form-select-cyber" onchange="toggleResignationDate(this.value, 'add_resignation_wrapper')">
+              <option value="Active">Active Employee</option>
+              <option value="Resigned">Resigned / Departing</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </div>
+          <div class="form-group-cyber" id="add_resignation_wrapper" style="display: none;">
+            <label class="form-label-cyber" for="add_resignation_date">Last Working Day (Resignation Date)</label>
+            <input type="date" id="add_resignation_date" name="resignation_date" class="form-input-cyber">
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_password">Initial Password</label>
+            <input type="text" id="add_password" name="password" class="form-input-cyber" value="Saveetha#2026">
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="add_mfa">MFA Enrollment</label>
+            <select id="add_mfa" name="mfa_enabled" class="form-select-cyber">
+              <option value="1">Enrolled (TOTP Authenticator)</option>
+              <option value="0">Not Enrolled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('addEmployeeModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-maroon"><i class="fas fa-check"></i> Provision Identity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: EDIT EMPLOYEE
+     ========================================================================== -->
+<div class="modal-overlay" id="editEmployeeModal">
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-user-pen" style="color: #f43f5e;"></i>
+        <span>Modify Employee Identity & Posture</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('editEmployeeModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form id="editEmployeeForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group-cyber">
+            <label class="form-label-cyber">Username (Fixed)</label>
+            <input type="text" id="edit_username" class="form-input-cyber" disabled>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_full_name">Full Name *</label>
+            <input type="text" id="edit_full_name" name="full_name" class="form-input-cyber" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_email">Email *</label>
+            <input type="email" id="edit_email" name="email" class="form-input-cyber" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_position">Position *</label>
+            <input type="text" id="edit_position" name="position" class="form-input-cyber" required>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_department">Department</label>
+            <select id="edit_department" name="department" class="form-select-cyber" required>
+              <option value="Finance">Finance</option>
+              <option value="IT Security">IT Security</option>
+              <option value="IT Infrastructure">IT Infrastructure</option>
+              <option value="Human Resources">Human Resources</option>
+              <option value="Operations">Operations</option>
+              <option value="Business Dev">Business Development</option>
+            </select>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_role">Role</label>
+            <select id="edit_role" name="role" class="form-select-cyber">
+              <option value="employee">Employee</option>
+              <option value="admin">SOC Admin</option>
+            </select>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_employment_status">Employment Status</label>
+            <select id="edit_employment_status" name="employment_status" class="form-select-cyber" onchange="toggleResignationDate(this.value, 'edit_resignation_wrapper')">
+              <option value="Active">Active Employee</option>
+              <option value="Resigned">Resigned / Former Employee</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </div>
+          <div class="form-group-cyber" id="edit_resignation_wrapper">
+            <label class="form-label-cyber" for="edit_resignation_date">Last Working Day</label>
+            <input type="date" id="edit_resignation_date" name="resignation_date" class="form-input-cyber">
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_account_status">Account Security Status</label>
+            <select id="edit_account_status" name="account_status" class="form-select-cyber">
+              <option value="Active">Active</option>
+              <option value="Suspended">Suspended</option>
+              <option value="Flagged">Flagged (Shadow Risk)</option>
+            </select>
+          </div>
+          <div class="form-group-cyber">
+            <label class="form-label-cyber" for="edit_mfa_enabled">MFA Status</label>
+            <select id="edit_mfa_enabled" name="mfa_enabled" class="form-select-cyber">
+              <option value="1">Enrolled</option>
+              <option value="0">Not Enrolled</option>
+            </select>
+          </div>
+          <div class="form-group-cyber" style="grid-column: span 2;">
+            <label class="form-label-cyber" for="edit_new_password">Reset Password (Leave blank to keep unchanged)</label>
+            <input type="password" id="edit_new_password" name="new_password" class="form-input-cyber" placeholder="Enter new password to override">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('editEmployeeModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-maroon"><i class="fas fa-save"></i> Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleResignationDate(status, wrapperId) {
+    const el = document.getElementById(wrapperId);
+    if (status === 'Resigned') {
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  function openEditModal(emp) {
+    document.getElementById('editEmployeeForm').action = '/admin/employees/edit/' + emp.id;
+    document.getElementById('edit_username').value = emp.username;
+    document.getElementById('edit_full_name').value = emp.full_name;
+    document.getElementById('edit_email').value = emp.email;
+    document.getElementById('edit_position').value = emp.position;
+    document.getElementById('edit_department').value = emp.department;
+    document.getElementById('edit_role').value = emp.role;
+    document.getElementById('edit_employment_status').value = emp.employment_status;
+    document.getElementById('edit_resignation_date').value = emp.resignation_date || '';
+    document.getElementById('edit_account_status').value = emp.account_status;
+    document.getElementById('edit_mfa_enabled').value = emp.mfa_enabled ? '1' : '0';
+    document.getElementById('edit_new_password').value = '';
+
+    toggleResignationDate(emp.employment_status, 'edit_resignation_wrapper');
+    openModal('editEmployeeModal');
+  }
+</script>
+{% endblock %}

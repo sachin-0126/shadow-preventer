@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Threat & Incident Alerts | SHADOW PREVENTER{% endblock %}
+{% block page_title %}
+  <i class="fas fa-bell" style="color: #ef4444;"></i>
+  <span>SOC Threat Alerts & Incident Response</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero-bar">
+  <div class="hero-title-group">
+    <h1>Autonomous Threat & Policy Alerts</h1>
+    <p>Categorized by Critical, High, Medium, and Low severity with automated forensic triage.</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="btn-cyber btn-outline-maroon" onclick="triggerDeepScan('{{ csrf_token }}')">
+      <i class="fas fa-arrows-rotate"></i>
+      <span>Refresh Anomaly Scan</span>
+    </button>
+  </div>
+</div>
+
+<!-- Severity Filter Pills -->
+<div class="cyber-card" style="margin-bottom: 24px;">
+  <div class="card-body-cyber" style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{{ url_for('admin_alerts') }}" class="btn-cyber {% if not severity_filter %}btn-maroon{% else %}btn-outline{% endif %} btn-sm">
+        All Severities
+      </a>
+      <a href="{{ url_for('admin_alerts', severity='Critical') }}" class="btn-cyber {% if severity_filter == 'Critical' %}btn-danger{% else %}btn-outline-danger{% endif %} btn-sm">
+        <i class="fas fa-circle-exclamation"></i> Critical
+      </a>
+      <a href="{{ url_for('admin_alerts', severity='High') }}" class="btn-cyber {% if severity_filter == 'High' %}btn-maroon{% else %}btn-outline{% endif %} btn-sm" style="{% if severity_filter == 'High' %}background: #ea580c; border-color: #ea580c;{% endif %}">
+        <i class="fas fa-radiation"></i> High
+      </a>
+      <a href="{{ url_for('admin_alerts', severity='Medium') }}" class="btn-cyber {% if severity_filter == 'Medium' %}btn-maroon{% else %}btn-outline{% endif %} btn-sm" style="{% if severity_filter == 'Medium' %}background: #f59e0b; color: #000; border-color: #f59e0b;{% endif %}">
+        <i class="fas fa-triangle-exclamation"></i> Medium
+      </a>
+      <a href="{{ url_for('admin_alerts', severity='Low') }}" class="btn-cyber {% if severity_filter == 'Low' %}btn-maroon{% else %}btn-outline{% endif %} btn-sm" style="{% if severity_filter == 'Low' %}background: #3b82f6; border-color: #3b82f6;{% endif %}">
+        <i class="fas fa-circle-info"></i> Low
+      </a>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <a href="{{ url_for('admin_alerts', status='Pending', severity=severity_filter) }}" class="btn-cyber {% if status_filter == 'Pending' %}btn-maroon{% else %}btn-outline{% endif %} btn-sm">
+        Pending Only
+      </a>
+      <a href="{{ url_for('admin_alerts', status='Resolved', severity=severity_filter) }}" class="btn-cyber {% if status_filter == 'Resolved' %}btn-maroon{% else %}btn-outline{% endif %} btn-sm">
+        Resolved Only
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts Table Card -->
+<div class="cyber-card">
+  <div class="card-header-cyber">
+    <div class="card-title-cyber">
+      <i class="fas fa-list-check"></i>
+      <span>Incident Triage Queue ({{ alerts|length }} Alerts)</span>
+    </div>
+    <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;">
+      INCIDENT LIFECYCLE MANAGEMENT
+    </div>
+  </div>
+  <div class="card-body-cyber" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="cyber-table">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Alert Details & Description</th>
+            <th>Category</th>
+            <th>Target Account</th>
+            <th>Source IP</th>
+            <th>Status</th>
+            <th>Timestamp</th>
+            <th style="text-align: right;">Mitigation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in alerts %}
+          <tr class="{% if alert.severity == 'Critical' %}row-flagged{% elif alert.severity == 'High' %}row-dormant{% endif %}">
+            <td>
+              <span class="badge-severity {% if alert.severity == 'Critical' %}sev-critical{% elif alert.severity == 'High' %}sev-high{% elif alert.severity == 'Medium' %}sev-medium{% else %}sev-low{% endif %}">
+                <i class="fas fa-{% if alert.severity == 'Critical' %}skull-crossbones{% elif alert.severity == 'High' %}radiation{% elif alert.severity == 'Medium' %}triangle-exclamation{% else %}circle-info{% endif %}"></i>
+                {{ alert.severity }}
+              </span>
+            </td>
+            <td style="max-width: 380px;">
+              <div style="font-weight: 700; color: #fff; margin-bottom: 3px;">
+                {{ alert.title }}
+                {% if alert.is_simulated_case %}
+                <span style="font-size: 10px; background: #ef4444; color: #fff; padding: 1px 6px; border-radius: 3px; font-family: var(--font-mono); margin-left: 6px;">
+                  SIMULATED CASE STUDY
+                </span>
+                {% endif %}
+              </div>
+              <div style="font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+                {{ alert.description }}
+              </div>
+              {% if alert.mitigation_action %}
+              <div style="font-size: 11px; color: #f43f5e; margin-top: 4px; font-family: var(--font-mono);">
+                <i class="fas fa-shield"></i> Recommendation: {{ alert.mitigation_action }}
+              </div>
+              {% endif %}
+              {% if alert.admin_notes %}
+              <div style="font-size: 11px; color: #34d399; margin-top: 2px;">
+                <i class="fas fa-comment-dots"></i> Resolution Notes: {{ alert.admin_notes }}
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94a3b8;">
+                {{ alert.category }}
+              </span>
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #fff;">
+                {{ alert.username }}
+              </span>
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 11.5px; color: #cbd5e1;">
+                {{ alert.source_ip or 'Internal' }}
+              </span>
+            </td>
+            <td>
+              {% if alert.status == 'Pending' %}
+              <span class="status-pill status-flagged"><i class="fas fa-hourglass-half"></i> Pending</span>
+              {% elif alert.status == 'Resolved' %}
+              <span class="status-pill status-active"><i class="fas fa-circle-check"></i> Resolved</span>
+              {% elif alert.status == 'Dismissed' %}
+              <span class="status-pill status-mfa-off"><i class="fas fa-ban"></i> Dismissed</span>
+              {% else %}
+              <span class="status-pill status-dormant">{{ alert.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: #94a3b8;">
+                {{ alert.created_at }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px;">
+                {% if alert.status == 'Pending' %}
+                <form action="{{ url_for('mitigate_alert', alert_id=alert.id) }}" method="POST" style="display: inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit" class="btn-cyber btn-danger btn-sm" title="Auto-Mitigate & Suspend User" onclick="return confirm('Execute automatic mitigation: Quarantine account {{ alert.username }} and mark incident resolved?')">
+                    <i class="fas fa-bolt"></i> Mitigate
+                  </button>
+                </form>
+                <button type="button" class="btn-cyber btn-outline-maroon btn-sm" onclick="openResolveModal({{ alert.id }}, '{{ alert.title }}')">
+                  <i class="fas fa-check"></i> Resolve
+                </button>
+                <button type="button" class="btn-cyber btn-outline btn-sm" onclick="openRejectModal({{ alert.id }}, '{{ alert.title }}')">
+                  <i class="fas fa-xmark"></i> Dismiss
+                </button>
+                {% else %}
+                <span style="font-size: 11px; color: #64748b; font-family: var(--font-mono);">
+                  CLOSED ({{ alert.resolved_by or 'SOC' }})
+                </span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 30px; color: #94a3b8;">
+              No alerts match the chosen severity or status filter.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: RESOLVE ALERT
+     ========================================================================== -->
+<div class="modal-overlay" id="resolveAlertModal">
+  <div class="modal-card">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-shield-check" style="color: #10b981;"></i>
+        <span>Resolve Security Alert</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('resolveAlertModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form id="resolveAlertForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <p style="color: #cbd5e1; margin-bottom: 14px;" id="resolveAlertTitle"></p>
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="resolve_notes">Investigation & Resolution Notes *</label>
+          <textarea id="resolve_notes" name="notes" class="form-textarea-cyber" rows="4" placeholder="Detail forensic steps, credential rotation, or authorized justification..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('resolveAlertModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-maroon"><i class="fas fa-check"></i> Complete Resolution</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: DISMISS / REJECT ALERT
+     ========================================================================== -->
+<div class="modal-overlay" id="rejectAlertModal">
+  <div class="modal-card">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-ban" style="color: #f59e0b;"></i>
+        <span>Dismiss Incident Alert</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('rejectAlertModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form id="rejectAlertForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <p style="color: #cbd5e1; margin-bottom: 14px;" id="rejectAlertTitle"></p>
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="reject_reason">Reason for Dismissal *</label>
+          <input type="text" id="reject_reason" name="reason" class="form-input-cyber" placeholder="e.g. Authorized off-hours system maintenance, sanctioned test" required>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('rejectAlertModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-outline-danger"><i class="fas fa-xmark"></i> Dismiss Alert</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openResolveModal(alertId, title) {
+    document.getElementById('resolveAlertForm').action = '/admin/alerts/resolve/' + alertId;
+    document.getElementById('resolveAlertTitle').textContent = 'Resolving: ' + title;
+    openModal('resolveAlertModal');
+  }
+
+  function openRejectModal(alertId, title) {
+    document.getElementById('rejectAlertForm').action = '/admin/alerts/reject/' + alertId;
+    document.getElementById('rejectAlertTitle').textContent = 'Dismissing: ' + title;
+    openModal('rejectAlertModal');
+  }
+</script>
+{% endblock %}

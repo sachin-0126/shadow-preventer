@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Security Hub | SHADOW PREVENTER{% endblock %}
+{% block page_title %}
+  <i class="fas fa-id-badge" style="color: #f43f5e;"></i>
+  <span>Employee Security & Credential Hub</span>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero-bar">
+  <div class="hero-title-group">
+    <h1>Identity Health & Personal Access Portal</h1>
+    <p>Welcome, <strong>{{ user.full_name }}</strong> &bull; {{ user.position }} ({{ user.department }})</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="btn-cyber btn-outline-danger" onclick="openModal('reportIncidentModal')">
+      <i class="fas fa-flag"></i>
+      <span>Report Suspicious Activity</span>
+    </button>
+  </div>
+</div>
+
+{% if user.username == 'r.menon' %}
+<!-- Simulated Demo Case Notice for Rohan Menon's account -->
+<div class="case-study-hero" style="margin-bottom: 24px;">
+  <div class="case-header-row">
+    <span class="case-tag-crimathon">CRIMATHON DEMO BREACH CASE</span>
+    <span class="badge-severity sev-critical">CRITICAL SHADOW RISK</span>
+  </div>
+  <div class="case-title">
+    <i class="fas fa-triangle-exclamation"></i>
+    <span>Simulated Demo Subject: Rohan Menon (Accounts Payable Clerk)</span>
+  </div>
+  <p class="case-description">
+    Notice: This account demonstrates a post-resignation shadow credential vulnerability. Official last working day was recorded as 
+    <strong>30 June 2026</strong>. Login activity from IP <strong>172.16.8.44</strong> on <strong>13 August 2026</strong> 
+    triggered automated security flags in the SOC dashboard.
+  </p>
+</div>
+{% endif %}
+
+<!-- Top Status Cards Grid -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+  <!-- 1. Account Status Card -->
+  <div class="kpi-card {% if user.account_status == 'Active' %}kpi-maroon{% else %}kpi-danger{% endif %}">
+    <div class="kpi-header">
+      <span class="kpi-title">Account Security State</span>
+      <div class="kpi-icon-wrapper">
+        <i class="fas fa-{% if user.account_status == 'Active' %}circle-check{% else %}triangle-exclamation{% endif %}"></i>
+      </div>
+    </div>
+    <div class="kpi-value" style="font-size: 22px; text-transform: uppercase;">
+      {{ user.account_status }}
+    </div>
+    <div class="kpi-footer">
+      <span>Employment: <strong>{{ user.employment_status }}</strong></span>
+    </div>
+  </div>
+
+  <!-- 2. Security Health Score -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Identity Posture Score</span>
+      <div class="kpi-icon-wrapper" style="color: #34d399;"><i class="fas fa-heart-pulse"></i></div>
+    </div>
+    <div class="kpi-value" style="color: {% if sec_score >= 80 %}#34d399{% elif sec_score >= 50 %}#fbbf24{% else %}#f87171{% endif %};">
+      {{ sec_score }}%
+    </div>
+    <div class="kpi-footer">
+      <span>{% if sec_score == 100 %}Optimal security compliance{% else %}MFA or posture recommendations pending{% endif %}</span>
+    </div>
+  </div>
+
+  <!-- 3. MFA Status Card with Quick Toggle -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Two-Factor Authentication</span>
+      <div class="kpi-icon-wrapper" style="color: #60a5fa;"><i class="fas fa-mobile-screen-button"></i></div>
+    </div>
+    <div class="kpi-value" style="font-size: 18px;">
+      {% if user.mfa_enabled %}
+      <span style="color: #34d399;"><i class="fas fa-shield"></i> ENROLLED</span>
+      {% else %}
+      <span style="color: #f87171;"><i class="fas fa-xmark"></i> NOT ACTIVE</span>
+      {% endif %}
+    </div>
+    <div class="kpi-footer" style="margin-top: 6px;">
+      <form action="{{ url_for('toggle_mfa') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn-cyber {% if user.mfa_enabled %}btn-outline{% else %}btn-maroon{% endif %} btn-sm">
+          <i class="fas fa-arrows-rotate"></i>
+          <span>{% if user.mfa_enabled %}Disable MFA (Test){% else %}Simulate MFA Enrollment{% endif %}</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Dormancy Window -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Inactivity Telemetry</span>
+      <div class="kpi-icon-wrapper"><i class="fas fa-stopwatch"></i></div>
+    </div>
+    <div class="kpi-value" style="font-size: 20px;">
+      {{ inactivity_days }} Days Inactive
+    </div>
+    <div class="kpi-footer">
+      <span>Dormancy Policy: 3–5 Day Warning</span>
+    </div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <!-- Personal Login History -->
+  <div class="cyber-card chart-card-lg">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span>Personal Authentication History (Recent Sessions)</span>
+      </div>
+      <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;">
+        AUDITED EVENT TELEMETRY
+      </div>
+    </div>
+    <div class="card-body-cyber" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="cyber-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Origin IP Address</th>
+              <th>Location</th>
+              <th>Auth Method</th>
+              <th>Result</th>
+              <th>Risk Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in history %}
+            <tr class="{% if log.risk_level == 'Critical' %}row-flagged{% elif log.risk_level == 'Medium' %}row-dormant{% endif %}">
+              <td style="font-family: var(--font-mono); font-size: 11.5px; color: #fff;">
+                {{ log.login_time }}
+              </td>
+              <td style="font-family: var(--font-mono); font-size: 12px; color: #cbd5e1;">
+                {{ log.ip_address }}
+              </td>
+              <td>{{ log.location }}</td>
+              <td>{{ log.auth_method }}</td>
+              <td>
+                {% if log.status == 'Success' %}
+                <span class="status-pill status-active"><i class="fas fa-check"></i> Success</span>
+                {% elif log.status == 'Blocked' %}
+                <span class="status-pill status-suspended"><i class="fas fa-ban"></i> Blocked</span>
+                {% else %}
+                <span class="status-pill status-flagged">{{ log.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge-severity {% if log.risk_level == 'Critical' %}sev-critical{% elif log.risk_level == 'High' %}sev-high{% elif log.risk_level == 'Medium' %}sev-medium{% else %}sev-low{% endif %}">
+                  {{ log.risk_level }}
+                </span>
+                {% if log.risk_reason %}
+                <div style="font-size: 10.5px; color: #94a3b8; margin-top: 2px;">{{ log.risk_reason }}</div>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 25px; color: #94a3b8;">
+                No prior login records found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee Requests & Actions Card -->
+  <div class="cyber-card chart-card-sm">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-hand-holding-hand"></i>
+        <span>Security Clearance Requests</span>
+      </div>
+      <button type="button" class="btn-cyber btn-outline-maroon btn-sm" onclick="openModal('newRequestModal')">
+        <i class="fas fa-plus"></i> Submit Request
+      </button>
+    </div>
+    <div class="card-body-cyber">
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 14px;">
+        Request administrative clearance, MFA device resets, or report returning from planned leave to avoid dormancy lock.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for req in requests %}
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 12px; border-radius: var(--radius-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="color: #fff; font-size: 12.5px;">{{ req.request_type }}</strong>
+            <span class="status-pill {% if req.status == 'Approved' %}status-active{% elif req.status == 'Rejected' %}status-suspended{% else %}status-flagged{% endif %}" style="font-size: 10px;">
+              {{ req.status }}
+            </span>
+          </div>
+          <div style="font-size: 11.5px; color: #cbd5e1; margin-bottom: 4px;">{{ req.reason }}</div>
+          {% if req.admin_response %}
+          <div style="font-size: 10.5px; color: #34d399;">Admin: {{ req.admin_response }}</div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
+          No active security requests submitted.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: SUBMIT SECURITY REQUEST
+     ========================================================================== -->
+<div class="modal-overlay" id="newRequestModal">
+  <div class="modal-card">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-file-signature" style="color: #f43f5e;"></i>
+        <span>Submit Security Clearance Request</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('newRequestModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form action="{{ url_for('submit_employee_request') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="req_type">Request Type *</label>
+          <select id="req_type" name="request_type" class="form-select-cyber" required>
+            <option value="MFA Reset & Token Re-enrollment">MFA Reset & New QR Code</option>
+            <option value="Account Reactivation">Account Reactivation / Dormancy Clearance</option>
+            <option value="Planned Leave Notification">Planned Extended Leave (Exemption from Dormancy Policy)</option>
+            <option value="Elevated Department Access">Department File Share Access</option>
+          </select>
+        </div>
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="req_urgency">Urgency Level</label>
+          <select id="req_urgency" name="urgency" class="form-select-cyber">
+            <option value="Low">Low &bull; Routine administrative</option>
+            <option value="Medium" selected>Medium &bull; Standard operation</option>
+            <option value="High">High &bull; Urgent business blockage</option>
+          </select>
+        </div>
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="req_reason">Business Justification *</label>
+          <textarea id="req_reason" name="reason" class="form-textarea-cyber" rows="4" placeholder="Detail reason for this request..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('newRequestModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-maroon"><i class="fas fa-paper-plane"></i> Submit to SOC Admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     MODAL: REPORT SUSPICIOUS ACTIVITY
+     ========================================================================== -->
+<div class="modal-overlay" id="reportIncidentModal">
+  <div class="modal-card">
+    <div class="modal-header-cyber">
+      <div class="modal-title-cyber">
+        <i class="fas fa-triangle-exclamation" style="color: #ef4444;"></i>
+        <span>Report Security Anomaly</span>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeModal('reportIncidentModal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form action="{{ url_for('report_suspicious_activity') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="modal-body-cyber">
+        <p style="color: #cbd5e1; font-size: 13px; margin-bottom: 14px;">
+          Did you observe an unfamiliar login in your history, an unrecognized MFA prompt, or phishing message? 
+          Submitting this report immediately alerts the SOC incident responders.
+        </p>
+        <div class="form-group-cyber">
+          <label class="form-label-cyber" for="incident_desc">Incident Description *</label>
+          <textarea id="incident_desc" name="description" class="form-textarea-cyber" rows="4" placeholder="Describe the unrecognized IP, unexpected prompt, or odd credential event..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('reportIncidentModal')">Cancel</button>
+        <button type="submit" class="btn-cyber btn-danger"><i class="fas fa-bullhorn"></i> Dispatch Security Incident</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

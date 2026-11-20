@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}SOC Command Center | SHADOW PREVENTER{% endblock %}
+{% block page_title %}
+  <i class="fas fa-radar" style="color: #f43f5e;"></i>
+  <span>SOC Defense Command Center</span>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header Bar with Scan Trigger -->
+<div class="dashboard-hero-bar">
+  <div class="hero-title-group">
+    <h1>
+      <span>Credential Integrity & Shadow Detection Engine</span>
+    </h1>
+    <p>Real-time enterprise monitoring &bull; Automated orphan account mitigation &bull; 3–5 day dormancy telemetry</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="btn-cyber btn-outline-maroon" id="btnTriggerScan" onclick="triggerDeepScan('{{ csrf_token }}')">
+      <i class="fas fa-shield-virus"></i>
+      <span>Run Security Scan</span>
+    </button>
+    <a href="{{ url_for('credential_monitoring') }}" class="btn-cyber btn-maroon">
+      <i class="fas fa-magnifying-glass-chart"></i>
+      <span>Investigate Matrix</span>
+    </a>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     FLAGSHIP DEMO CASE STUDY: ROHAN MENON (CRIMATHON SIMULATION)
+     ========================================================================== -->
+<div class="case-study-hero">
+  <div class="case-header-row">
+    <div class="case-badge-group">
+      <span class="case-tag-crimathon"><i class="fas fa-award"></i> CRIMATHON CASE STUDY</span>
+      <span class="case-tag-simulated"><i class="fas fa-flask"></i> SIMULATED DEMO BREACH</span>
+      <span class="badge-severity sev-critical"><i class="fas fa-circle-exclamation"></i> CRITICAL SEVERITY</span>
+    </div>
+    <div>
+      <span style="font-family: var(--font-mono); font-size: 11px; color: #fca5a5;">
+        <i class="fas fa-clock"></i> DETECTED: 13 August 2026 23:14:02 IST
+      </span>
+    </div>
+  </div>
+
+  <div class="case-title">
+    <i class="fas fa-triangle-exclamation"></i>
+    <span>CRITICAL: Post-Resignation Shadow Access Detected &mdash; Account: r.menon</span>
+  </div>
+
+  <p class="case-description">
+    <strong>Forensic Discovery:</strong> Rohan Menon (Accounts Payable Clerk) formally departed the enterprise on 
+    <strong>30 June 2026</strong>. 44 days post-termination, active credentials authenticated to internal financial systems 
+    from unauthorized IP <strong>172.16.8.44</strong> (Chennai). The account was left un-deprovisioned without MFA protection, 
+    forming a critical <em>Shadow / Zombie Credential</em> vulnerability.
+  </p>
+
+  <div class="case-telemetry-grid">
+    <div class="telemetry-item">
+      <span class="telemetry-label">Subject Name</span>
+      <span class="telemetry-value">Rohan Menon</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Assigned Role</span>
+      <span class="telemetry-value">Accounts Payable Clerk</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Last Working Day</span>
+      <span class="telemetry-value highlight">30 June 2026</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Suspicious Login</span>
+      <span class="telemetry-value danger">13 August 2026 23:14</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Origin IP & Location</span>
+      <span class="telemetry-value danger">172.16.8.44 (Chennai)</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Auth Method</span>
+      <span class="telemetry-value">Password Only</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">MFA Enrolled</span>
+      <span class="telemetry-value danger"><i class="fas fa-circle-xmark"></i> Not Enrolled</span>
+    </div>
+    <div class="telemetry-item">
+      <span class="telemetry-label">Auth Result</span>
+      <span class="telemetry-value danger"><i class="fas fa-circle-check"></i> Success (Compromised)</span>
+    </div>
+  </div>
+
+  <div class="case-action-bar">
+    <div style="font-size: 12.5px; color: #fca5a5; display: flex; align-items: center; gap: 8px;">
+      <i class="fas fa-shield-halved"></i>
+      <span>Current Account Posture: 
+        <strong style="color: #fff; text-transform: uppercase;">[{{ rohan_user['account_status'] if rohan_user else 'FLAGGED' }}]</strong>
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      {% if rohan_user and rohan_user['account_status'] != 'Suspended' %}
+      <form action="{{ url_for('suspend_account', user_id=rohan_user['id']) }}" method="POST" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="reason" value="Quarantined under simulated breach protocol for Rohan Menon (Post-Resignation Shadow Access).">
+        <button type="submit" class="btn-cyber btn-danger">
+          <i class="fas fa-ban"></i>
+          <span>Quarantine & Suspend r.menon</span>
+        </button>
+      </form>
+      {% elif rohan_user and rohan_user['account_status'] == 'Suspended' %}
+      <form action="{{ url_for('reactivate_account', user_id=rohan_user['id']) }}" method="POST" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="reason" value="Reactivated for demonstration re-test.">
+        <button type="submit" class="btn-cyber btn-maroon">
+          <i class="fas fa-rotate-left"></i>
+          <span>Reactivate r.menon for Demo</span>
+        </button>
+      </form>
+      {% endif %}
+
+      {% if rohan_alert and rohan_alert['status'] == 'Pending' %}
+      <form action="{{ url_for('mitigate_alert', alert_id=rohan_alert['id']) }}" method="POST" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn-cyber btn-outline-danger">
+          <i class="fas fa-bolt"></i>
+          <span>1-Click Auto-Mitigate Alert</span>
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     CORE KPI SUMMARY METRICS
+     ========================================================================== -->
+<div class="kpi-grid">
+  <!-- 1. Total Employees -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Monitored Identities</span>
+      <div class="kpi-icon-wrapper"><i class="fas fa-users"></i></div>
+    </div>
+    <div class="kpi-value">{{ stats.total_employees }}</div>
+    <div class="kpi-footer">
+      <span>{{ stats.dept_labels|length }} Active Enterprise Divisions</span>
+    </div>
+  </div>
+
+  <!-- 2. Active Accounts -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-title">Active Accounts</span>
+      <div class="kpi-icon-wrapper" style="color: #34d399;"><i class="fas fa-user-check"></i></div>
+    </div>
+    <div class="kpi-value">{{ stats.active_accounts }}</div>
+    <div class="kpi-footer">
+      <span class="kpi-trend-safe"><i class="fas fa-shield"></i> {{ ((stats.active_accounts / (stats.total_employees or 1)) * 100)|round|int }}% compliant</span>
+    </div>
+  </div>
+
+  <!-- 3. Inactive Accounts (3-5 days policy) -->
+  <div class="kpi-card kpi-maroon">
+    <div class="kpi-header">
+      <span class="kpi-title">Dormant Accounts</span>
+      <div class="kpi-icon-wrapper" style="color: #fbbf24;"><i class="fas fa-clock-rotate-left"></i></div>
+    </div>
+    <div class="kpi-value">{{ stats.inactive_accounts }}</div>
+    <div class="kpi-footer">
+      <span style="color: #fbbf24; font-weight: 600;">
+        <i class="fas fa-triangle-exclamation"></i> {{ stats.dormant_3_5 }} in 3–5d window
+      </span>
+      <span style="color: #94a3b8; font-size: 11px;">({{ stats.extended_dormant }} &gt;5d)</span>
+    </div>
+  </div>
+
+  <!-- 4. Suspicious / Flagged Accounts -->
+  <div class="kpi-card kpi-danger">
+    <div class="kpi-header">
+      <span class="kpi-title">Shadow / Flagged</span>
+      <div class="kpi-icon-wrapper"><i class="fas fa-skull"></i></div>
+    </div>
+    <div class="kpi-value">{{ stats.suspicious_accounts }}</div>
+    <div class="kpi-footer">
+      <span class="kpi-trend-danger"><i class="fas fa-exclamation-circle"></i> Requires SOC Quarantine</span>
+    </div>
+  </div>
+
+  <!-- 5. Pending Security Alerts -->
+  <div class="kpi-card kpi-danger">
+    <div class="kpi-header">
+      <span class="kpi-title">Pending Incidents</span>
+      <div class="kpi-icon-wrapper"><i class="fas fa-bell"></i></div>
+    </div>
+    <div class="kpi-value">{{ stats.pending_alerts }}</div>
+    <div class="kpi-footer">
+      <span class="kpi-trend-danger"><strong>{{ stats.critical_alerts }} Critical</strong> &bull; {{ stats.high_alerts }} High</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     CHART.JS VISUAL ANALYTICS GRID
+     ========================================================================== -->
+<div class="charts-grid">
+  <!-- 1. 7-Day Activity & Threat Telemetry Line Chart -->
+  <div class="cyber-card chart-card-lg">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-chart-area"></i>
+        <span>7-Day Authentication & Threat Telemetry</span>
+      </div>
+      <div style="font-size: 11px; font-family: var(--font-mono); color: #94a3b8;">
+        LIVE TELEMETRY FEED
+      </div>
+    </div>
+    <div class="card-body-cyber">
+      <div class="chart-container-cyber">
+        <canvas id="telemetryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Alert Severity Breakdown Doughnut Chart -->
+  <div class="cyber-card chart-card-sm">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-pie-chart"></i>
+        <span>Incident Severity Matrix</span>
+      </div>
+      <span class="badge-severity sev-critical">{{ stats.critical_alerts }} CRIT</span>
+    </div>
+    <div class="card-body-cyber">
+      <div class="chart-container-cyber">
+        <canvas id="severityChart" 
+                data-critical="{{ stats.critical_alerts }}" 
+                data-high="{{ stats.high_alerts }}" 
+                data-medium="{{ stats.medium_alerts }}" 
+                data-low="{{ stats.low_alerts }}">
+        </canvas>
+      </div>
+      <div class="chart-legend-custom">
+        <div class="legend-item"><span class="legend-dot" style="background: #ef4444;"></span> Critical ({{ stats.critical_alerts }})</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #ea580c;"></span> High ({{ stats.high_alerts }})</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span> Medium ({{ stats.medium_alerts }})</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span> Low ({{ stats.low_alerts }})</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Department Risk Distribution Bar Chart -->
+  <div class="cyber-card chart-card-lg">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-building-shield"></i>
+        <span>Identity Distribution by Division</span>
+      </div>
+      <a href="{{ url_for('admin_employees') }}" class="btn-cyber btn-outline btn-sm">Manage Directory</a>
+    </div>
+    <div class="card-body-cyber">
+      <div class="chart-container-cyber">
+        <canvas id="deptChart"
+                data-labels='{{ stats.dept_labels|tojson }}'
+                data-counts='{{ stats.dept_counts|tojson }}'>
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. MFA Compliance Adoption Pie Chart -->
+  <div class="cyber-card chart-card-sm">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-fingerprint"></i>
+        <span>MFA Enforcement Ratio</span>
+      </div>
+      <span class="status-pill status-active">{{ stats.mfa_enrolled }}/{{ stats.total_employees }} ENROLLED</span>
+    </div>
+    <div class="card-body-cyber">
+      <div class="chart-container-cyber">
+        <canvas id="mfaChart"
+                data-enrolled="{{ stats.mfa_enrolled }}"
+                data-not-enrolled="{{ stats.mfa_not_enrolled }}">
+        </canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     RECENT INCIDENTS & FORENSIC AUDIT STREAM
+     ========================================================================== -->
+<div class="feeds-grid">
+  <!-- Recent Threat Alerts Feed -->
+  <div class="cyber-card feed-col-left">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-triangle-exclamation" style="color: #ef4444;"></i>
+        <span>Active Security Alerts Stream</span>
+      </div>
+      <a href="{{ url_for('admin_alerts') }}" class="btn-cyber btn-outline-maroon btn-sm">View All Incidents</a>
+    </div>
+    <div class="card-body-cyber">
+      <div class="incident-list">
+        {% for alert in recent_alerts %}
+        <div class="incident-item {% if alert.severity == 'Critical' %}critical{% endif %}">
+          <div class="incident-icon {% if alert.severity == 'Critical' %}critical{% elif alert.severity == 'High' %}high{% else %}medium{% endif %}">
+            <i class="fas fa-{% if alert.severity == 'Critical' %}skull-crossbones{% elif alert.severity == 'High' %}radiation{% else %}shield-exclamation{% endif %}"></i>
+          </div>
+          <div class="incident-content">
+            <div class="incident-top">
+              <span class="incident-title">{{ alert.title }}</span>
+              <span class="badge-severity {% if alert.severity == 'Critical' %}sev-critical{% elif alert.severity == 'High' %}sev-high{% elif alert.severity == 'Medium' %}sev-medium{% else %}sev-low{% endif %}">
+                {{ alert.severity }}
+              </span>
+            </div>
+            <p class="incident-desc">{{ alert.description }}</p>
+            <div class="incident-meta">
+              <span><i class="fas fa-user"></i> {{ alert.username }}</span>
+              <span><i class="fas fa-network-wired"></i> {{ alert.source_ip }}</span>
+              <span><i class="fas fa-clock"></i> {{ alert.created_at }}</span>
+              {% if alert.is_simulated_case %}
+              <span style="color: #f43f5e; font-weight: 700;"><i class="fas fa-flask"></i> SIMULATED CASE</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <p style="color: #94a3b8; text-align: center; padding: 20px;">No alerts currently recorded.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Forensic Audit Log Timeline -->
+  <div class="cyber-card feed-col-right">
+    <div class="card-header-cyber">
+      <div class="card-title-cyber">
+        <i class="fas fa-clipboard-list" style="color: #f43f5e;"></i>
+        <span>Immutable SOC Audit Trail</span>
+      </div>
+      <a href="{{ url_for('admin_audit_logs') }}" class="btn-cyber btn-outline btn-sm">Full Audit Trail</a>
+    </div>
+    <div class="card-body-cyber">
+      <div class="audit-timeline">
+        {% for log in recent_audits %}
+        <div class="audit-stream-item">
+          <div class="audit-stream-marker">
+            <i class="fas fa-check"></i>
+          </div>
+          <div class="audit-stream-body">
+            <div class="audit-stream-header">
+              <span class="audit-stream-action">{{ log.action_type }}</span>
+              <span style="color: #64748b; font-family: var(--font-mono); font-size: 10px;">{{ log.timestamp }}</span>
+            </div>
+            <div class="audit-stream-desc">
+              {{ log.details }}
+            </div>
+            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 4px; font-family: var(--font-mono);">
+              By: <strong>{{ log.admin_username }}</strong> &bull; {{ log.ip_address }}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <p style="color: #94a3b8; text-align: center; padding: 20px;">No audit events recorded.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
+{% endblock %}

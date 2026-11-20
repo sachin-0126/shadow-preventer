@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SHADOW PREVENTER{% endblock %} | SOC Security Portal</title>
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Core Design System CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  
+  <!-- Chart.js local bundle -->
+  <script src="{{ url_for('static', filename='vendor/chart.min.js') }}"></script>
+</head>
+<body>
+  <div class="cyber-bg-pattern"></div>
+
+  <div class="app-container">
+    {% if session.get('user_id') %}
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div class="brand-title">
+          <span class="brand-name">SHADOW PREVENTER</span>
+          <span class="brand-subtitle">CRIMATHON &bull; SAVEETHA</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        {% if session.get('role') == 'admin' %}
+        <div class="nav-section-title">SOC Operations</div>
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+          <i class="fas fa-chart-line"></i>
+          <span>SOC Dashboard</span>
+        </a>
+        <a href="{{ url_for('credential_monitoring') }}" class="nav-item {% if request.endpoint == 'credential_monitoring' %}active{% endif %}">
+          <i class="fas fa-user-shield"></i>
+          <span>Credential Monitor</span>
+          <span class="nav-badge badge-alert">ACTIVE</span>
+        </a>
+        <a href="{{ url_for('admin_alerts') }}" class="nav-item {% if request.endpoint == 'admin_alerts' %}active{% endif %}">
+          <i class="fas fa-bell"></i>
+          <span>Threat Alerts</span>
+        </a>
+        <a href="{{ url_for('admin_approvals') }}" class="nav-item {% if request.endpoint == 'admin_approvals' %}active{% endif %}">
+          <i class="fas fa-tasks"></i>
+          <span>Admin Approvals</span>
+        </a>
+
+        <div class="nav-section-title">Identity & Directory</div>
+        <a href="{{ url_for('admin_employees') }}" class="nav-item {% if request.endpoint == 'admin_employees' %}active{% endif %}">
+          <i class="fas fa-users-gear"></i>
+          <span>Employee Directory</span>
+        </a>
+        <a href="{{ url_for('admin_audit_logs') }}" class="nav-item {% if request.endpoint == 'admin_audit_logs' %}active{% endif %}">
+          <i class="fas fa-file-shield"></i>
+          <span>Audit Logs</span>
+        </a>
+
+        <div class="nav-section-title">User View</div>
+        <a href="{{ url_for('employee_portal') }}" class="nav-item {% if request.endpoint == 'employee_portal' %}active{% endif %}">
+          <i class="fas fa-id-badge"></i>
+          <span>Employee Portal</span>
+        </a>
+
+        {% else %}
+        <!-- Employee specific nav -->
+        <div class="nav-section-title">My Account</div>
+        <a href="{{ url_for('employee_portal') }}" class="nav-item active">
+          <i class="fas fa-id-badge"></i>
+          <span>Security Portal</span>
+        </a>
+        {% endif %}
+
+        <div class="nav-section-title" style="margin-top: auto;">Session</div>
+        <a href="{{ url_for('logout') }}" class="nav-item" style="color: #f87171;">
+          <i class="fas fa-arrow-right-from-bracket"></i>
+          <span>Sign Out</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="college-badge">
+          <i class="fas fa-graduation-cap"></i>
+          <div class="college-text">
+            <strong>Saveetha Engg College</strong>
+            <span>Crimathon &bull; 2026</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper" {% if not session.get('user_id') %}style="margin-left: 0;"{% endif %}>
+      {% if session.get('user_id') %}
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button type="button" class="btn-cyber btn-outline btn-sm" onclick="toggleSidebar()" style="display: none;" id="btnMobileSidebar">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            {% block page_title %}Security Command Center{% endblock %}
+          </div>
+          <div class="system-status-indicator">
+            <span class="pulse-dot"></span>
+            <span>SHADOW DEFENSE ACTIVE</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="terminal-clock" id="terminal-clock-display">
+            <i class="fas fa-clock"></i> <span>--:--:--</span>
+          </div>
+
+          <div class="header-user-profile">
+            <div class="avatar-badge">
+              {{ session.get('username', 'U')[:1]|upper }}
+            </div>
+            <div class="user-info-text">
+              <span class="user-display-name">{{ session.get('full_name', session.get('username')) }}</span>
+              <span class="user-role-badge">[{{ session.get('role', 'user')|upper }}]</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      {% endif %}
+
+      <!-- Page Content -->
+      <main class="content-body">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+                <div class="cyber-alert cyber-alert-{{ category }}">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-{% if category == 'danger' %}circle-exclamation{% elif category == 'warning' %}triangle-exclamation{% elif category == 'success' %}circle-check{% else %}circle-info{% endif %}"></i>
+                    <span>{{ message }}</span>
+                  </div>
+                  <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 16px;">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Global Action Confirmation Modal -->
+  <div class="modal-overlay" id="globalConfirmModal">
+    <div class="modal-card">
+      <div class="modal-header-cyber">
+        <div class="modal-title-cyber" id="confirmModalTitle">
+          <i class="fas fa-triangle-exclamation" style="color: #ef4444;"></i>
+          <span>Confirm Action</span>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeModal('globalConfirmModal')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body-cyber">
+        <p id="confirmModalText" style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">
+          Are you sure you wish to proceed with this operation?
+        </p>
+      </div>
+      <div class="modal-footer-cyber">
+        <button type="button" class="btn-cyber btn-outline" onclick="closeModal('globalConfirmModal')">Cancel</button>
+        <button type="button" class="btn-cyber btn-danger" id="confirmModalSubmitBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
